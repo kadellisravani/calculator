@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scientific Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Roboto Mono', monospace;
+    }
+   .calculator {
+      background: #1f1f2e;
+      border-radius: 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      width: 320px;
+      padding: 25px 30px 30px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+   }
+    .display {
+      background: #2e2f4d;
+      color: #d8d8e9;
+      border-radius: 15px;
+      font-size: 2.5rem;
+      text-align: right;
+      padding: 20px;
+      letter-spacing: 1.5px;
+      user-select: none;
+      overflow-x: auto;
+    }
+    .buttons {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    button {
+      padding: 15px 0;
+      font-size: 1.1rem;
+      background: #2e2f4d;
+      color: #d8d8e9;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 0px #1c1c2b;
+      transition: all 0.2s ease;
+    }
+    button:hover {
+      background: #50537d;
+      box-shadow: 0 4px #1c1c2b;
+      transform: translateY(2px);
+    }
+    button:active {
+      box-shadow: 0 2px #1c1c2b;
+      transform: translateY(4px);
+    }
+    .special { background:  #ff7043; color: white; }
+    .operator { background: #ff7043; color: white; }
+    .equal { background: #26a69a; color: white; grid-column: span 2; }
+    .clear { background:  #ff7043; color: white; }
+    .backspace { background: #ff7043; color: white; }
+    .rotate {
+      background:#ff7043;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.3rem;
+      color: white;
+    }
+    .rotate span {
+      transform: rotate(45deg);
+      display: inline-block;
+    }
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator" aria-label="Scientific Calculator">
+    <div class="display" id="display">0</div>
+    <div class="buttons">
+      <!-- Scientific buttons -->
+      <button class="special toggle-target hidden" data-fn="square">x²</button>
+      <button class="special toggle-target hidden" data-fn="sqrt">√</button>
+      <button class="special toggle-target hidden" data-fn="inverse">1/x</button>
+      <button class="special toggle-target hidden" data-fn="pi">π</button>
+      <button class="special toggle-target hidden" data-fn="e">e</button>
+      <button class="special toggle-target hidden" data-fn="factorial">x!</button>
+
+      <!-- Basic and functional buttons -->
+      <button class="clear" id="clear">AC</button>
+      <button class="backspace" id="backspace">⌫</button>
+      <button class="operator" data-value="%">%</button>
+      <button class="operator" data-value="/">÷</button><br>
+
+      <button data-value="7">7</button>
+      <button data-value="8">8</button>
+      <button data-value="9">9</button>
+      <button class="operator" data-value="*">×</button><br>
+
+      <button data-value="4">4</button>
+      <button data-value="5">5</button>
+      <button data-value="6">6</button>
+      <button class="operator" data-value="-">−</button><br>
+
+      <button data-value="1">1</button>
+      <button data-value="2">2</button>
+      <button data-value="3">3</button>
+      <button class="operator" data-value="+">+</button><br>
+
+      <button class="rotate" id="toggle-functions"><span>&#8635;</span></button>
+      <button data-value="0">0</button>
+      <button data-value=".">.</button>
+      <button class="equal" id="equals">=</button>
+    </div>
+  </div>
+
+  <script>
+    const display = document.getElementById('display');
+    const buttons = document.querySelectorAll('.buttons button');
+    let currentInput = '0';
+
+    function updateDisplay() {
+      display.textContent = currentInput;
+    }
+
+    function factorial(n) {
+      if (n < 0 || !Number.isInteger(n)) return 'Error';
+      let res = 1;
+      for (let i = 1; i <= n; i++) res *= i;
+      return res;
+    }
+
+    function safeEval(expr) {
+      try {
+        return Function('"use strict";return (' + expr.replace(/π/g, 'Math.PI').replace(/e/g, 'Math.E') + ')')();
+      } catch {
+        return 'Error';
+      }
+    }
+
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        const value = button.getAttribute('data-value');
+        const fn = button.getAttribute('data-fn');
+
+        if (button.id === 'clear') {
+          currentInput = '0';
+        } else if (button.id === 'backspace') {
+          currentInput = currentInput.length > 1 ? currentInput.slice(0, -1) : '0';
+        } else if (button.id === 'equals') {
+          const result = safeEval(currentInput);
+          currentInput = isNaN(result) || result === 'Error' ? 'Error' : result.toString();
+        } else if (fn) {
+          const num = parseFloat(currentInput);
+          if (isNaN(num)) {
+            currentInput = 'Error';
+          } else {
+            switch (fn) {
+              case 'sqrt': currentInput = Math.sqrt(num).toString(); break;
+              case 'square': currentInput = Math.pow(num, 2).toString(); break;
+              case 'inverse': currentInput = num !== 0 ? (1 / num).toString() : 'Error'; break;
+              case 'factorial': currentInput = factorial(num).toString(); break;
+              case 'pi': currentInput += 'π'; break;
+              case 'e': currentInput += 'e'; break;
+            }
+          }
+        } else if (value) {
+          if (currentInput === '0' && value !== '.') {
+            currentInput = value;
+          } else {
+            currentInput += value;
+          }
+        }
+        updateDisplay();
+      });
+    });
+
+    document.getElementById('toggle-functions').addEventListener('click', () => {
+      document.querySelectorAll('.toggle-target').forEach(btn => {
+        btn.classList.toggle('hidden');
+      });
+    });
+
+    window.addEventListener('keydown', e => {
+      const key = e.key;
+      if ((key >= '0' && key <= '9') || ['+', '-', '*', '/', '.', '%'].includes(key)) {
+        document.querySelector(`button[data-value="${key}"]`)?.click();
+      } else if (key === 'Enter' || key === '=') {
+        document.getElementById('equals').click();
+      } else if (key.toLowerCase() === 'c') {
+        document.getElementById('clear').click();
+      } else if (key === 'Backspace') {
+        document.getElementById('backspace').click();
+      }
+    });
+  </script>
+</body>
+</html>
